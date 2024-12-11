@@ -1,0 +1,22 @@
+2024-12-11T18:21:33.778-03:00 - error: uncaughtException: Cannot find module 'jsonwebtoken'
+Require stack:
+- C:\Users\joaom\WebstormProjects\taskmanagement\src\middleware\authToken.middleware.ts
+- C:\Users\joaom\WebstormProjects\taskmanagement\src\services\http.service.ts
+- C:\Users\joaom\WebstormProjects\taskmanagement\src\server.ts
+Error: Cannot find module 'jsonwebtoken'
+Require stack:
+- C:\Users\joaom\WebstormProjects\taskmanagement\src\middleware\authToken.middleware.ts
+- C:\Users\joaom\WebstormProjects\taskmanagement\src\services\http.service.ts
+- C:\Users\joaom\WebstormProjects\taskmanagement\src\server.ts
+    at Function.Module._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function.Module._resolveFilename.sharedData.moduleResolveFilenameHook.installedValue [as _resolveFilename] (C:\Users\joaom\WebstormProjects\taskmanagement\node_modules\@cspotcode\source-map-support\source-map-support.js:811:30)
+    at Function.Module._load (node:internal/modules/cjs/loader:1051:27)
+    at Module.require (node:internal/modules/cjs/loader:1311:19)
+    at require (node:internal/modules/helpers:179:18)
+    at Object.<anonymous> (C:\Users\joaom\WebstormProjects\taskmanagement\src\middleware\authToken.middleware.ts:2:1)
+    at Module._compile (node:internal/modules/cjs/loader:1469:14)
+    at Module.m._compile (C:\Users\joaom\WebstormProjects\taskmanagement\node_modules\ts-node\src\index.ts:1618:23)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1548:10)
+    at Object.require.extensions.<computed> [as .ts] (C:\Users\joaom\WebstormProjects\taskmanagement\node_modules\ts-node\src\index.ts:1621:12))
+2024-12-11T18:21:48.233-03:00 - error: Database connection failed: SequelizeConnectionRefusedError - C:\Users\joaom\WebstormProjects\taskmanagement\src\services\http.service.ts)
+2024-12-11T19:10:01.873-03:00 - error: Database connection failed: SequelizeConnectionRefusedError - C:\Users\joaom\WebstormProjects\taskmanagement\src\services\http.service.ts)

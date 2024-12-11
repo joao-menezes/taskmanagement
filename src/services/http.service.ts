@@ -1,6 +1,6 @@
 import sequelize from "../config/sequelize.database.config";
 import express, { Express } from 'express';
-import logger from "../utils/logger";
+import logger from "../shared/utils/logger";
 import { authenticateToken } from "../middleware/authToken.middleware";
 import routes from "../routes/routes";
 import authRouter from "../routes/auth.routes";

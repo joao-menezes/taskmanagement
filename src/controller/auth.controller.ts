@@ -5,7 +5,7 @@ import HttpCodes from "http-status-codes";
 import dotenv from 'dotenv';
 import { SharedErrors } from '../shared/errors/shared-errors';
 import UserModel from "../model/user.model";
-import logger from "../utils/logger";
+import logger from "../shared/utils/logger";
 dotenv.config()
 
 const secret = String(process.env.JWT_SECRET);

@@ -3,7 +3,7 @@ import UserModel from "../model/user.model";
 import {SharedErrors} from "../shared/errors/shared-errors";
 import HttpCodes from "http-status-codes";
 import {UserInterface} from "../interface/user.interface";
-import logger from "../utils/logger";
+import logger from "../shared/utils/logger";
 
 export const getUsers = async (req: Request, res: Response) => {
     try {

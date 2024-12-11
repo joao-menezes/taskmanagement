@@ -17,5 +17,5 @@ npm-debug.log
 *.sublime-workspace
 
 .env
-/src/logs
+/src/shared/utils/logs
 /src/config

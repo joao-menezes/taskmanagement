@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { SharedErrors } from '../shared/errors/shared-errors';
 import UserModel from "../model/user.model";
 import logger from "../shared/utils/logger";
+import { userRoles } from "../shared/utils/consts/roles";
 dotenv.config()
 
 const secret = String(process.env.JWT_SECRET);
@@ -14,7 +15,7 @@ const _fileName = module.filename.split("/").pop();
 
 export const registerUser = async (req: Request, res: Response) => {
     try {
-        const { username, email, password, tasksConcluded } = req.body;
+        const { username, email, password, userRole } = req.body;
 
         const existingEmail = await UserModel.findOne({ where: { email } });
 
@@ -22,11 +23,16 @@ export const registerUser = async (req: Request, res: Response) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        if (!userRoles[userRole]) {
+            res.status(HttpCodes.BAD_REQUEST).json({ error: "Invalid role" });
+            return;
+        }
+
         const user = await UserModel.create({
             username,
             password: hashedPassword,
-            tasksConcluded,
-            email
+            email,
+            role: userRole
         });
 
         logger.info(`User Created - ${_fileName}`);

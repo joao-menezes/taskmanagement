@@ -4,4 +4,5 @@ export interface UserInterface {
     password: string;
     email: string;
     tasksConcluded: number;
+    role: number;
 }

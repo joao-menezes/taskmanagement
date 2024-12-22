@@ -10,7 +10,7 @@ const secret = String(process.env.JWT_SECRET);
 
 export const authenticateToken = (req: any, res: Response, next: NextFunction) => {
     const token = req.header('Authorization')?.split(' ')[1];
-
+    //
     if (!token) {
         res.status(HttpCodes.UNAUTHORIZED).json(SharedErrors.AccessDenied);
     }

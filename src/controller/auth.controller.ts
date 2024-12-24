@@ -1,12 +1,12 @@
-import { Request, Response } from 'express';
+import {Request, Response} from 'express';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import HttpCodes from "http-status-codes";
 import dotenv from 'dotenv';
-import { SharedErrors } from '../shared/errors/shared-errors';
+import {SharedErrors} from '../shared/errors/shared-errors';
 import UserModel from "../model/user.model";
 import logger from "../shared/utils/logger";
-import { userRoles } from "../shared/utils/consts/roles";
+import {UserRoles} from "../shared/utils/consts/roles";
 dotenv.config()
 
 const secret = String(process.env.JWT_SECRET);
@@ -19,11 +19,14 @@ export const registerUser = async (req: Request, res: Response) => {
 
         const existingEmail = await UserModel.findOne({ where: { email } });
 
-        if (existingEmail) res.status(HttpCodes.BAD_REQUEST).json({ error: SharedErrors.EmailAlreadyExists });
+        if (existingEmail) {
+            res.status(HttpCodes.BAD_REQUEST).json({ error: SharedErrors.EmailAlreadyExists });
+            return;
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        if (!userRoles[userRole]) {
+        if (!Object.values(UserRoles).includes(userRole)) {
             res.status(HttpCodes.BAD_REQUEST).json({ error: "Invalid role" });
             return;
         }
@@ -43,6 +46,7 @@ export const registerUser = async (req: Request, res: Response) => {
     } catch (error) {
         logger.error(`Error in create user ${error} - ${_fileName}`)
         res.status(HttpCodes.INTERNAL_SERVER_ERROR).json({ error: SharedErrors.InternalServerError });
+        return;
     }
 };
 
@@ -61,12 +65,13 @@ export const login = async (req: Request, res: Response)  => {
 
         if (!isMatch) {
             res.status(HttpCodes.UNAUTHORIZED).json({ error: SharedErrors.AccessDenied });
-            return
+            return;
         }
 
         const token = jwt.sign({ userId: user.userId }, secret, { expiresIn: '1h' });
         res.status(HttpCodes.OK).json({ token, name: user.username });
     } catch (error) {
         res.status(HttpCodes.INTERNAL_SERVER_ERROR).json({ error: 'Login failed' });
+        return;
     }
 };

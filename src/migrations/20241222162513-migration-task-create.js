@@ -1,36 +1,24 @@
-'use strict';
 import {DataTypes} from "sequelize";
 
 export default {
-  up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable('users', {
-      userId: {
+  async up (queryInterface, Sequelize) {
+    await queryInterface.createTable('tasks', {
+      taskId: {
         type: DataTypes.UUID,
         defaultValue: DataTypes.UUIDV4,
         primaryKey: true,
         allowNull: false,
       },
-      username: {
+      ownerId: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      password: {
+      title: {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      email: {
+      description: {
         type: DataTypes.STRING,
-        allowNull: false,
-        unique: true,
-      },
-      tasksConcluded: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
-        allowNull: false,
-      },
-      role: {
-        type: DataTypes.INTEGER,
-        defaultValue: 0,
         allowNull: false,
       },
       createdAt: {
@@ -43,10 +31,10 @@ export default {
         allowNull: false,
         defaultValue: DataTypes.NOW,
       },
-    });
+    })
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable('users');
+    await queryInterface.dropTable('tasks');
   },
 };

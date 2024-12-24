@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import {Router} from 'express';
 import {authLimiter} from "../middleware/auth.rate.limit.middleware";
 import {login, registerUser} from "../controller/auth.controller";
 

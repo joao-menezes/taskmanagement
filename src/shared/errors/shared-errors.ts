@@ -47,10 +47,10 @@ export class SharedErrors {
         };
     }
 
-    static get ImageNotFound(){
+    static get TaskNotFound(){
         return {
             code: HttpCodes.NOT_FOUND,
-            message: 'Image Not Found'
+            message: 'Task Not Found'
         };
     }
 

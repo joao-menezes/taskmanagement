@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import {Request, Response} from 'express';
 import UserModel from "../model/user.model";
 import {SharedErrors} from "../shared/errors/shared-errors";
 import HttpCodes from "http-status-codes";
@@ -22,22 +22,27 @@ export const getUsers = async (req: Request, res: Response) => {
     }
 };
 
-export const getUserById = async (req: any, res: any) => {
+export const getUserById = async (req: Request, res: Response) => {
     const { userId } = req.params;
 
     try {
         const user =  await UserModel.findOne({ where: { userId } });
 
-        if (!user) return res.status(HttpCodes.NOT_FOUND).json(SharedErrors.UserNotFound);
+        if (!user) {
+            res.status(HttpCodes.NOT_FOUND).json(SharedErrors.UserNotFound);
+            return;
+        }
 
-        return res.status(HttpCodes.OK).json(user);
+        logger.info(`Get User with successfully : ${__filename}`);
+        res.status(HttpCodes.OK).json(user);
     } catch (error) {
-        console.error('Error creating user:', error);
-        return res.status(HttpCodes.INTERNAL_SERVER_ERROR).json(SharedErrors.InternalServerError);
+        logger.error(`Error getting user: ${error} - ${__filename}`);
+        res.status(HttpCodes.INTERNAL_SERVER_ERROR).json(SharedErrors.InternalServerError);
+        return;
     }
 };
 
-export const updateUser = async (req: any, res: any) => {
+export const updateUser = async (req: Request, res: Response): Promise<void> => {
     const { userId } = req.params;
     const { username, email, password } = req.body;
 
@@ -46,23 +51,26 @@ export const updateUser = async (req: any, res: any) => {
         const emailAlreadyExist = await UserModel.findOne({where: { email }})
 
         if (!user) {
-            return res.status(HttpCodes.NOT_FOUND).json(SharedErrors.UserNotFound);
+            res.status(HttpCodes.NOT_FOUND).json(SharedErrors.UserNotFound);
+            return;
         }
 
         if (emailAlreadyExist) {
-            return res.status(HttpCodes.NOT_FOUND).json(SharedErrors.EmailAlreadyExists);
+            res.status(HttpCodes.NOT_FOUND).json(SharedErrors.EmailAlreadyExists);
+            return;
         }
 
-        await user.update({
+        const userUpdated = await user.update({
             username,
             email,
             password,
         });
 
-        return res.status(HttpCodes.OK).json({ message: 'user updated', user });
+        res.status(HttpCodes.OK).json({ message: 'user updated', userUpdated });
     } catch (error) {
         console.error('Error in found users:', error);
-        return res.status(HttpCodes.INTERNAL_SERVER_ERROR).json(SharedErrors.InternalServerError);
+        res.status(HttpCodes.INTERNAL_SERVER_ERROR).json(SharedErrors.InternalServerError);
+        return;
     }
 };
 
@@ -70,13 +78,9 @@ export const deleteUserById = async (req: Request, res: Response) => {
     try {
         const { userId } = req.params;
 
-        const deletedCount = await UserModel.destroy({
-            where: {
-                userId: userId,
-            },
-        });
+        const deleteUser = await UserModel.destroy({where: {  userId: userId }});
 
-        if (!deletedCount) {
+        if (!deleteUser) {
             res.status(HttpCodes.NOT_FOUND).json({ message: `User with ID ${userId} not found.`, });
             return;
         }

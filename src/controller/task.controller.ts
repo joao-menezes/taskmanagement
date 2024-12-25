@@ -127,29 +127,40 @@ export const updateTask = async (req: Request, res: Response) => {
 export const deleteTaskById = async (req: Request, res: Response) => {
     try {
         const { taskId, ownerId } = req.params;
+        const { userId } = req.body;
 
         const task = await TaskModel.findOne({ where: { taskId } });
-        const user = await UserModel.findOne({ where: { userId: ownerId } });
+        const user = await UserModel.findOne({ where: { userId } });
 
         if (!task) {
             res.status(HttpCodes.NOT_FOUND).json({ message: `Task with ID ${taskId} not found.` });
             return
         }
 
-        if (task.ownerId !== ownerId) {
-            res.status(HttpCodes.FORBIDDEN).json({ message: "This task does not belong to the user." });
+        if (!user) {
+            res.status(HttpCodes.BAD_REQUEST).json({ message: SharedErrors.UserNotFound});
             return
         }
 
-        await TaskModel.destroy({ where: { taskId } });
+        if (task.ownerId === userId || user.role === UserRoles.Admin || user.role === UserRoles.Manager) {
 
-        if (user) {
-            user.userTasksList = user.userTasksList.filter((taskInList: TaskInterface) => taskInList.taskId !== taskId);
-            await user.save();
+            if (task.ownerId === ownerId) {
+                const owner = await UserModel.findOne({ where: { userId: ownerId } });
+                if (owner) {
+                    owner.userTasksList = owner.userTasksList.filter((taskInList: TaskInterface) => taskInList.taskId !== taskId);
+                    await owner.save();
+                }
+            }
+
+            await TaskModel.destroy({ where: { taskId } });
+
+            logger.info(`Task: ${taskId} deleted successfully by user: ${userId}`);
+            res.status(HttpCodes.OK).json({ message: `Task ${taskId} deleted successfully.` });
+            return
         }
 
-        logger.info(`Task: ${taskId} deleted successfully by user: ${ownerId}`);
-        res.status(HttpCodes.OK).json({ message: `Task ${taskId} deleted successfully.` });
+        res.status(HttpCodes.FORBIDDEN).json({ message: "You do not have permission to delete this task." });
+        return
 
     } catch (error) {
         logger.error(`Error deleting Task: ${error}`);

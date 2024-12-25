@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 import HttpCodes from 'http-status-codes';
 import {SharedErrors} from '../shared/errors/shared-errors'
 import dotenv from 'dotenv';
-import {UserRoles} from "../shared/utils/consts/roles";
+import {UserRoles} from "../shared/utils/enums/roles";
 
 dotenv.config();
 

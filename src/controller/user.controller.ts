@@ -78,7 +78,7 @@ export const deleteUserById = async (req: Request, res: Response) => {
     try {
         const { userId } = req.params;
 
-        const deleteUser = await UserModel.destroy({where: {  userId: userId }});
+        const deleteUser = await UserModel.destroy({where: { userId }});
 
         if (!deleteUser) {
             res.status(HttpCodes.NOT_FOUND).json({ message: `User with ID ${userId} not found.`, });

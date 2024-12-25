@@ -5,7 +5,7 @@ import logger from "../shared/utils/logger";
 import {TaskInterface} from "../interface/task.interface";
 import TaskModel from "../model/task.model";
 import UserModel from "../model/user.model";
-import {UserRoles} from "../shared/utils/consts/roles";
+import {UserRoles} from "../shared/utils/enums/roles";
 
 const _fileName = module.filename.split("/").pop();
 
@@ -69,7 +69,11 @@ export const createTask = async (req: Request, res: Response) => {
             description
         });
 
-        logger.info(`User Created - ${_fileName}`);
+        user.userTasksList.push(task);
+        await user.save();
+        await UserModel.update({ userTasksList: user.userTasksList }, { where: { userId: ownerId } });
+
+        logger.info(`Task Created - ${_fileName}`);
         res.status(HttpCodes.CREATED).json({
             message: 'Task created successfully',
             task: task
@@ -122,29 +126,34 @@ export const updateTask = async (req: Request, res: Response) => {
 
 export const deleteTaskById = async (req: Request, res: Response) => {
     try {
-        const { taskId } = req.params;
-        const { userId } = req.body
+        const { taskId, ownerId } = req.params;
 
-        const deleteTask = await TaskModel.destroy({where: { taskId: taskId } });
-        const userRole = await UserModel.findOne({where: userId})
+        const task = await TaskModel.findOne({ where: { taskId } });
+        const user = await UserModel.findOne({ where: { userId: ownerId } });
 
-        if (userRole?.role !== UserRoles.Admin && userRole?.role !== UserRoles.Manager){
-            res.status(HttpCodes.FORBIDDEN).json({
-                message: "User does not have permission to create or edit tasks"
-            });
-            return;
+        if (!task) {
+            res.status(HttpCodes.NOT_FOUND).json({ message: `Task with ID ${taskId} not found.` });
+            return
         }
 
-        if (!deleteTask) {
-            res.status(HttpCodes.NOT_FOUND).json({ message: `Task with ID ${taskId} not found.`, });
-            return;
+        if (task.ownerId !== ownerId) {
+            res.status(HttpCodes.FORBIDDEN).json({ message: "This task does not belong to the user." });
+            return
         }
 
-        logger.info(`Task: ${taskId} deleted successfully: ${__filename}`);
-        res.status(HttpCodes.OK).json({  message: `Task: ${taskId} deleted successfully.`});
+        await TaskModel.destroy({ where: { taskId } });
+
+        if (user) {
+            user.userTasksList = user.userTasksList.filter((taskInList: TaskInterface) => taskInList.taskId !== taskId);
+            await user.save();
+        }
+
+        logger.info(`Task: ${taskId} deleted successfully by user: ${ownerId}`);
+        res.status(HttpCodes.OK).json({ message: `Task ${taskId} deleted successfully.` });
+
     } catch (error) {
-        logger.error(`Error deleting Task with ID ${req.params.userId}: ${error} - ${__filename}`);
+        logger.error(`Error deleting Task: ${error}`);
         res.status(HttpCodes.INTERNAL_SERVER_ERROR).json(SharedErrors.InternalServerError);
-        return;
     }
-}
+};
+

@@ -1,14 +1,16 @@
 import {DataTypes, Model, Optional} from 'sequelize';
 import sequelize from '../config/sequelize.database.config';
 import {TaskInterface} from "../interface/task.interface";
+import {TaskEnum} from "../shared/utils/enums/task.status";
 
-interface TaskCreationAttributes extends Optional<TaskInterface, 'taskId'> {}
+interface TaskCreationAttributes extends Optional<TaskInterface, 'taskId' | 'status'> {}
 
 class TaskModel extends Model<TaskInterface, TaskCreationAttributes> implements TaskInterface {
     public taskId!: string;
     public ownerId!: string;
     public title!: string;
     public description!: string;
+    public status!: number
 
     public readonly createdAt!: Date;
     public readonly updatedAt!: Date;
@@ -23,8 +25,8 @@ TaskModel.init(
             allowNull: false,
         },
         ownerId: {
-            type: DataTypes.STRING,
-            allowNull: false,
+            type: DataTypes.UUID,
+            allowNull: true,
         },
         title: {
             type: DataTypes.STRING,
@@ -32,6 +34,11 @@ TaskModel.init(
         },
         description: {
             type: DataTypes.STRING,
+            allowNull: false,
+        },
+        status: {
+            type: DataTypes.INTEGER,
+            defaultValue: TaskEnum.pending,
             allowNull: false,
         }
     },

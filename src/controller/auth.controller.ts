@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import {SharedErrors} from '../shared/errors/shared-errors';
 import UserModel from "../model/user.model";
 import logger from "../shared/utils/logger";
-import {UserRoles} from "../shared/utils/consts/roles";
+import {UserRoles} from "../shared/utils/enums/roles";
 dotenv.config()
 
 const secret = String(process.env.JWT_SECRET);
@@ -35,7 +35,8 @@ export const registerUser = async (req: Request, res: Response) => {
             username,
             password: hashedPassword,
             email,
-            role: userRole
+            role: userRole,
+            userTasksList: []
         });
 
         logger.info(`User Created - ${_fileName}`);

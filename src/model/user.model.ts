@@ -1,6 +1,8 @@
 import {DataTypes, Model, Optional} from 'sequelize';
 import sequelize from '../config/sequelize.database.config';
 import {UserInterface} from "../interface/user.interface";
+import {TaskInterface} from "../interface/task.interface";
+import TaskModel from "./task.model";
 
 interface UserCreationAttributes extends Optional<UserInterface, 'userId' | 'tasksConcluded'> {}
 
@@ -10,6 +12,7 @@ class UserModel extends Model<UserInterface, UserCreationAttributes> implements 
     public password!: string;
     public email!: string;
     public role!: number
+    public userTasksList!: TaskInterface[]
 
     public readonly tasksConcluded!: number;
     public readonly createdAt!: Date;
@@ -74,12 +77,17 @@ UserModel.init(
         },
         tasksConcluded: {
             defaultValue: 0,
-            type: DataTypes.NUMBER,
+            type: DataTypes.INTEGER,
             allowNull: true
         },
         role: {
             defaultValue: 0,
-            type: DataTypes.NUMBER,
+            type: DataTypes.INTEGER,
+            allowNull: false
+        },
+        userTasksList: {
+            type: DataTypes.JSON,
+            defaultValue: [],
             allowNull: false
         }
     },
@@ -90,13 +98,5 @@ UserModel.init(
         timestamps: true,
     }
 );
-
-
-// Hook para criptografar senha antes de criar o usuário
-// UserModel.beforeCreate(async (user) => {
-//     if (user.password) {
-//         user.password = await bcrypt.hash(user.password, 10);
-//     }
-// });
 
 export default UserModel;

@@ -1,3 +1,5 @@
+import {TaskInterface} from "./task.interface";
+
 export interface UserInterface {
     userId: string;
     username: string;
@@ -5,4 +7,5 @@ export interface UserInterface {
     email: string;
     tasksConcluded: number;
     role: number;
+    userTasksList: TaskInterface[];
 }

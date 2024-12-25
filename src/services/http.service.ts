@@ -5,6 +5,7 @@ import {authenticateToken} from "../middleware/authToken.middleware";
 import routes from "../routes/routes";
 import authRouter from "../routes/auth.routes";
 import dotenv from "dotenv";
+import {setupAssociations} from "../model/associations";
 
 dotenv.config();
 const _fileName = module.filename.split("/").pop();
@@ -31,7 +32,11 @@ export class HttpService {
     }
 
     _startServer() {
+        //setupAssociations();
         let server = this.app.listen(this.port, () => {
+            // sequelize.sync({ force: true }).then(() => {
+            //     console.log('Database synchronized');
+            // });
             logger.info(`Server is running on http://localhost:${this.port} - ${_fileName}`);
         });
 

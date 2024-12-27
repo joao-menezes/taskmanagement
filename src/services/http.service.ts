@@ -34,6 +34,9 @@ export class HttpService {
     _startServer() {
         setupAssociations();
         let server = this.app.listen(this.port, () => {
+            // sequelize.sync({ force: true }).then(() => {
+            //     console.log('Database synchronized');
+            // });
             logger.info(`Server is running on http://localhost:${this.port} - ${_fileName}`);
         });
 

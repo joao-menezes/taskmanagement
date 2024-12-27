@@ -87,11 +87,12 @@ export const createTask = async (req: Request, res: Response) => {
 
 export const updateTask = async (req: Request, res: Response) => {
     try {
-        const { taskId } = req.params
-        const { ownerId, title, description } = req.body
+        const { taskId } = req.params;
+        const { ownerId, title, description, userId } = req.body;
 
         const task = await TaskModel.findOne({ where: { taskId } });
-        const user = await UserModel.findOne({ where: { userId: ownerId} });
+        const oldOwner = await UserModel.findOne({ where: { userId: userId } });
+        const newOwner = await UserModel.findOne({ where: { userId: ownerId } });
 
         if (!task) {
             res.status(HttpCodes.BAD_REQUEST).json(SharedErrors.TaskNotFound);
@@ -103,10 +104,42 @@ export const updateTask = async (req: Request, res: Response) => {
             return;
         }
 
-        if (!user) {
+        if (!newOwner) {
             res.status(HttpCodes.BAD_REQUEST).json(SharedErrors.UserNotFound);
             return;
         }
+
+        if (task.ownerId !== userId && userId !== oldOwner?.userId && userId !== UserRoles.Admin && userId !== UserRoles.Manager) {
+            res.status(HttpCodes.FORBIDDEN).json({ message: "You do not have permission to update this task" });
+            return;
+        }
+
+        if (task.ownerId !== ownerId) {
+            if (oldOwner) {
+                oldOwner.userTasksList = oldOwner.userTasksList.filter(
+                    (taskInList: TaskInterface) => taskInList.taskId !== taskId
+                );
+                await oldOwner.save();
+            } else {
+                res.status(HttpCodes.NOT_FOUND).json({ message: "Old owner not found" });
+                return;
+            }
+
+            if (newOwner) {
+                const taskJson = task.toJSON();
+                newOwner.userTasksList = [...newOwner.userTasksList, taskJson];
+                await newOwner.save();
+            } else {
+                res.status(HttpCodes.NOT_FOUND).json({ message: "New owner not found" });
+                return;
+            }
+
+
+            console.log("Type of userTasksList:", typeof newOwner.userTasksList);
+
+            await task.update({ ownerId: newOwner.userId }); // Atualize a tarefa com o novo dono
+        }
+
 
         await task.update({
             ownerId,
@@ -114,15 +147,16 @@ export const updateTask = async (req: Request, res: Response) => {
             description
         });
 
-        logger.info(`User Created - ${_fileName}`);
-        res.status(HttpCodes.CREATED).json({
-            message: 'Task created successfully', task
+        logger.info(`Task updated successfully: ${taskId} by user: ${userId}`);
+        res.status(HttpCodes.OK).json({
+            message: 'Task updated successfully', task
         });
-    }catch (error){
-        logger.error(`Error in create task ${error} - ${_fileName}`)
+
+    } catch (error) {
+        logger.error(`Error updating task: ${error}`);
         res.status(HttpCodes.INTERNAL_SERVER_ERROR).json({ error: SharedErrors.InternalServerError });
     }
-}
+};
 
 export const deleteTaskById = async (req: Request, res: Response) => {
     try {

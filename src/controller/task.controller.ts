@@ -6,16 +6,37 @@ import {TaskInterface} from "../interface/task.interface";
 import TaskModel from "../model/task.model";
 import UserModel from "../model/user.model";
 import {UserRoles} from "../shared/utils/enums/roles";
+import {TaskService} from "../services/task.service";
 
 const _fileName = module.filename.split("/").pop();
 
 export const getTasks = async (req: Request, res: Response) => {
     try {
-        const tasks: TaskInterface[] = await TaskModel.findAll();
-        if (!tasks.length) {
+        const { userId } = req.body
+
+        let tasks: TaskInterface[];
+        const user = await UserModel.findOne({ where: { userId } });
+
+        if (!userId) {
             res.status(HttpCodes.BAD_REQUEST).json(SharedErrors.UserNotFound);
             return;
         }
+
+        if (!user){
+            return
+        }
+
+        if (user?.role === UserRoles.Admin || user?.role === UserRoles.Manager) {
+            tasks = await TaskModel.findAll();
+        } else {
+            tasks = await TaskModel.findAll({ where: { ownerId: userId } });
+        }
+
+        if (!tasks.length) {
+            res.status(HttpCodes.BAD_REQUEST).json(SharedErrors.TaskNotFound);
+            return;
+        }
+
 
         logger.info(`Get tasks with successfully : ${__filename}`);
         res.status(HttpCodes.OK).json({ Tasks: tasks });
@@ -91,7 +112,7 @@ export const updateTask = async (req: Request, res: Response) => {
         const { ownerId, title, description, oldOwnerId } = req.body;
 
         const task = await TaskModel.findOne({ where: { taskId } });
-        const oldOwner = await UserModel.findOne({ where: { userId: {userId: oldOwnerId} } });
+        const oldOwner = await UserModel.findOne({ where: { userId: oldOwnerId } });
         const newOwner = await UserModel.findOne({ where: { userId: ownerId } });
 
         if (!task) {
@@ -114,33 +135,16 @@ export const updateTask = async (req: Request, res: Response) => {
             return;
         }
 
-        if (task.ownerId === ownerId) return;
+        const taskService = new TaskService();
+        const result = await taskService.changeTaskOwner(task, oldOwner, newOwner);
 
-        if (!oldOwner) {
-            res.status(HttpCodes.NOT_FOUND).json({ message: "Old owner not found" });
-            return;
+        if (!result.success) {
+            res.status(HttpCodes.BAD_REQUEST).json({ message: result.message });
+            return
         }
-
-        oldOwner.userTasksList = oldOwner.userTasksList.filter(
-            (taskInList: TaskInterface) => taskInList.taskId !== taskId
-        );
-        await oldOwner.save();
-
-        if (!newOwner) {
-            res.status(HttpCodes.NOT_FOUND).json({ message: "New owner not found" });
-            return;
-        }
-
-        const taskJson = task.toJSON();
-        newOwner.userTasksList = [...newOwner.userTasksList, taskJson];
-        await newOwner.save();
-
-        await task.update({ ownerId: newOwner.userId });
-
-
 
         await task.update({
-            ownerId,
+            ownerId: newOwner.userId,
             title,
             description
         });

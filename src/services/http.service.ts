@@ -13,6 +13,9 @@ const _fileName = module.filename.split("/").pop();
 export class HttpService {
     app: Express = express();
     private port: number = +String(process.env.PORT);
+    private retryCount: number = 0;
+    private maxRetries: number = 5;
+    private retryDelay: number = 5000;
 
     constructor() {
         this.app.use(express.json());
@@ -27,35 +30,52 @@ export class HttpService {
             logger.info('Database connected successfully.');
         } catch (error) {
             logger.error(`Database connection failed: ${error} - ${_fileName}`);
-            process.exit(1);
+            throw error;
         }
     }
 
-    _startServer() {
+    private _startHttpServer(): void {
         setupAssociations();
-        let server = this.app.listen(this.port, () => {
-            // sequelize.sync({ force: true }).then(() => {
-            //     console.log('Database synchronized');
-            // });
+        const server = this.app.listen(this.port, () => {
             logger.info(`Server is running on http://localhost:${this.port} - ${_fileName}`);
         });
 
-        server.on('error', (error: any) => {
-            if (error.code === 'EADDRINUSE') {
-                logger.warn(`Port ${this.port} is in use. Trying port ${this.port + 1}...`);
-                this.port++;
-                this._startServer();
-            } else {
+        server.on("error", (error: any) => {
+            if (error.code !== "EADDRINUSE") {
                 logger.error(`Server error: ${error} - ${_fileName}`);
                 process.exit(1);
             }
+            logger.warn(`Port ${this.port} is in use. Trying port ${this.port + 1}...`);
+            this.port++;
+            this._startHttpServer();
         });
     }
 
-    async start() {
-        if (process.env.NODE_ENV !== 'production') {
+    async _startServer(): Promise<void> {
+        try {
             await this._initializeDatabase();
+            this._startHttpServer();
+        } catch (error) {
+            if (this.retryCount < this.maxRetries) {
+                this.retryCount++;
+                logger.warn(
+                    `Retrying to connect to the database (${this.retryCount}/${this.maxRetries}) in ${
+                        this.retryDelay / 1000
+                    } seconds...`
+                );
+                setTimeout(() => this._startServer(), this.retryDelay);
+            } else {
+                logger.error("Max retries reached. Could not connect to the database.");
+                process.exit(1);
+            }
         }
-        this._startServer();
+    }
+
+    async start(): Promise<void> {
+        if (process.env.NODE_ENV !== "production") {
+            await this._startServer();
+        } else {
+            this._startHttpServer();
+        }
     }
 }

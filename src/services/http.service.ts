@@ -1,11 +1,10 @@
 import sequelize from "../config/sequelize.database.config";
 import express, { Express } from 'express';
 import logger from "../shared/utils/logger";
-import {authenticateToken} from "../middleware/authToken.middleware";
-import routes from "../routes/routes";
-import authRouter from "../routes/auth.routes";
+import cors from "cors";
 import dotenv from "dotenv";
 import {setupAssociations} from "../model/associations";
+import {ConnectionRetry} from "../shared/utils/enums/connections.retry";
 
 dotenv.config();
 const _fileName = module.filename.split("/").pop();
@@ -14,35 +13,47 @@ export class HttpService {
     app: Express = express();
     private port: number = +String(process.env.PORT);
     private retryCount: number = 0;
-    private maxRetries: number = 5;
-    private retryDelay: number = 5000;
+    private maxRetries: number = ConnectionRetry.maxRetries;
+    private retryDelay: number = ConnectionRetry.retryDelay;
 
     constructor() {
+        this.app.use(cors())
         this.app.use(express.json());
 
-        this.app.use('/api', authenticateToken, routes);
-        this.app.use('/account/auth', authRouter);
+        this._registerRoutes();
     }
 
     async _initializeDatabase() {
         try {
             await sequelize.authenticate();
-            logger.info('Database connected successfully.');
+            logger.info(`Database connected successfully. - ${__filename}`);
         } catch (error) {
-            logger.error(`Database connection failed: ${error} - ${_fileName}`);
+            logger.error(`Database connection failed: ${error} - ${__filename}`);
             throw error;
         }
+    }
+
+    private _registerRoutes(): void {
+
+        import('../routes/router.config').then(({ routesConfig }) => {
+            routesConfig.forEach(({ path, router, middlewares = [] }) => {
+                this.app.use(path, ...middlewares, router);
+            });
+            logger.info("Routes registered successfully.");
+        }).catch((error) => {
+            logger.error(`Failed to register routes: ${error} - ${__filename}`);
+        });
     }
 
     private _startHttpServer(): void {
         setupAssociations();
         const server = this.app.listen(this.port, () => {
-            logger.info(`Server is running on http://localhost:${this.port} - ${_fileName}`);
+            logger.info(`Server is running on http://localhost:${this.port} - ${__filename}`);
         });
 
         server.on("error", (error: any) => {
             if (error.code !== "EADDRINUSE") {
-                logger.error(`Server error: ${error} - ${_fileName}`);
+                logger.error(`Server error: ${error} - ${__filename}`);
                 process.exit(1);
             }
             logger.warn(`Port ${this.port} is in use. Trying port ${this.port + 1}...`);
@@ -64,10 +75,10 @@ export class HttpService {
                     } seconds...`
                 );
                 setTimeout(() => this._startServer(), this.retryDelay);
-            } else {
-                logger.error("Max retries reached. Could not connect to the database.");
-                process.exit(1);
+                return;
             }
+            logger.error(`Max retries reached. Could not connect to the database. - ${__filename}`);
+            process.exit(1);
         }
     }
 

@@ -1,0 +1,31 @@
+@startuml
+!define UUID <UUID>
+
+class TaskModel {
+    + taskId: UUID
+    + ownerId: UUID
+    + title: String
+    + description: String
+    + status: Integer
+    + createdAt: Date {read-only}
+    + updatedAt: Date {read-only}
+}
+
+class TaskInterface {
+    + taskId: UUID
+    + ownerId: UUID
+    + title: String
+    + description: String
+    + status: Integer
+}
+
+enum TaskEnum {
+    pending
+    completed
+    in_progress
+}
+
+TaskModel ..|> TaskInterface
+TaskModel --> TaskEnum : status
+
+@enduml

@@ -5,6 +5,6 @@ import {login, registerUser} from "../controller/auth.controller";
 const authRouter = Router();
 
 authRouter.post('/register', authLimiter, registerUser);
-authRouter.post('/login', authLimiter, login);
+authRouter.post('/login', login);
 
 export default authRouter;

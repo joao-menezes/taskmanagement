@@ -11,8 +11,6 @@ dotenv.config()
 
 const secret = String(process.env.JWT_SECRET);
 
-const _fileName = module.filename.split("/").pop();
-
 export const registerUser = async (req: Request, res: Response) => {
     try {
         const { username, email, password, userRole } = req.body;
@@ -39,13 +37,13 @@ export const registerUser = async (req: Request, res: Response) => {
             userTasksList: []
         });
 
-        logger.info(`User Created - ${_fileName}`);
+        logger.info(`User Created - ${__filename}`);
         res.status(HttpCodes.CREATED).json({
             message: 'User created successfully',
             user: user
         });
     } catch (error) {
-        logger.error(`Error in create user ${error} - ${_fileName}`)
+        logger.error(`Error in create user ${error} - ${__filename}`)
         res.status(HttpCodes.INTERNAL_SERVER_ERROR).json({ error: SharedErrors.InternalServerError });
         return;
     }

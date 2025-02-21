@@ -1,0 +1,35 @@
+@startuml
+!define UUID <UUID>
+!define JSON {JSON}
+
+class UserModel {
+    + userId: UUID
+    + username: String
+    + password: String
+    + email: String
+    + role: Integer
+    + userTasksList: JSON
+    + tasksConcluded: Integer read-only
+    + createdAt: Date read-only
+    + updatedAt: Date read-only
+}
+
+    class UserInterface {
+        + userId: UUID
+        + username: String
+        + password: String
+        + email: String
+        + role: Integer
+        + userTasksList: JSON
+        + tasksConcluded: Integer
+    }
+
+    class TaskInterface {
+        // Defina os atributos conforme necessários
+    }
+
+    UserModel ..|> UserInterface
+    UserModel "1" *-- "0" TaskInterface : userTasksList
+
+    @enduml
+

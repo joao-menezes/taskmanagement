@@ -4,13 +4,6 @@ import TaskModel from "../model/task.model";
 
 export class TaskService {
     async changeTaskOwner(task: TaskModel, oldOwner: UserModel | null, newOwner: UserModel) {
-        if (task.ownerId === newOwner.userId) {
-            return {
-                success: false,
-                message: "Task already assigned to this owner"
-            };
-        }
-
         if (!oldOwner) {
             return {
                 success: false,

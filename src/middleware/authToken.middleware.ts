@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 import HttpCodes from 'http-status-codes';
 import {SharedErrors} from '../shared/errors/shared-errors'
 import dotenv from 'dotenv';
-import {UserRoles} from "../shared/utils/enums/roles";
 import logger from "../shared/utils/logger";
 
 dotenv.config();
@@ -15,11 +14,12 @@ export const authenticateToken = (req: any, res: Response, next: NextFunction) =
 
     if (!token) {
         res.status(HttpCodes.UNAUTHORIZED).json(SharedErrors.AccessDenied);
+        return
     }
     try {
         const decoded = jwt.verify(token, secret) as { userId: string };
 
-        req.user = decoded
+        req.user = decoded;
         req.userId = decoded.userId;
 
         next();

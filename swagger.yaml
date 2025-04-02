@@ -221,18 +221,18 @@ components:
       properties:
         username:
           type: string
-          example: "example"
+          example: "jhon doe"
         email:
           type: string
           format: email
-          example: "example1@example.com"
+          example: "example@example.com"
         password:
           type: string
           format: password
-          example: "12345678"
+          example: "12354678"
         userRole:
           type: integer
-          example: 3
+          example: 1
 
     UserLogin:
       type: object
@@ -243,11 +243,11 @@ components:
         email:
           type: string
           format: email
-          example: "example1@example.com"
+          example: "example@example.com"
         password:
           type: string
           format: password
-          example: "12345678"
+          example: "12354678"
 
     User:
       type: object
@@ -262,13 +262,6 @@ components:
           format: email
         userRole:
           type: integer
-          description: Role ID
-        tasksConcluded:
-          type: integer
-        userTasksList:
-          type: array
-          items:
-            $ref: "#/components/schemas/Task"
 
     UserUpdate:
       type: object

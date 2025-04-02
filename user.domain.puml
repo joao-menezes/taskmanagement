@@ -25,7 +25,11 @@ class UserModel {
     }
 
     class TaskInterface {
-        // Defina os atributos conforme necessários
+       + taskId: string;
+       + ownerId: string;
+       + title: string
+       + description: string,
+       + status: Integer;
     }
 
     UserModel ..|> UserInterface

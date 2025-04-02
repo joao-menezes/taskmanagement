@@ -23,6 +23,7 @@ enum TaskEnum {
     pending
     completed
     in_progress
+    abandon
 }
 
 TaskModel ..|> TaskInterface

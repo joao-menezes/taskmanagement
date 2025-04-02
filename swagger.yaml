@@ -1,0 +1,330 @@
+openapi: 3.0.0
+info:
+  title: Task Management API
+  description: API for a task management system with user authentication, task handling, and role-based access control.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local Development Server
+
+paths:
+  /account/auth/register:
+    post:
+      summary: Register a new user
+      description: Creates a new user account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegister"
+      responses:
+        "201":
+          description: User created successfully
+        "400":
+          description: Validation error
+        "409":
+          description: User already exists
+
+  /account/auth/login:
+    post:
+      summary: User login
+      description: Authenticates a user and returns a JWT token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        "200":
+          description: Successful login, returns JWT token
+        "401":
+          description: Unauthorized - Invalid credentials
+
+  /api/users:
+    get:
+      summary: List all users
+      description: Requires authentication (Admin only).
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+        "403":
+          description: Forbidden - Insufficient permissions
+
+  /api/users/{userId}:
+    delete:
+      summary: Delete user
+      description: Requires authentication. Deletes a user by ID.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: User deleted successfully
+        "404":
+          description: User not found
+
+    put:
+      summary: Update user
+      description: Updates user details.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: User updated successfully
+        "400":
+          description: Validation error
+        "404":
+          description: User not found
+
+  /api/tasks:
+    get:
+      summary: List tasks
+      description: Retrieves tasks based on user role.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+        "403":
+          description: Forbidden - Insufficient permissions
+
+    post:
+      summary: Create a new task
+      description: Creates a task with an assigned owner.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskCreate"
+      responses:
+        "201":
+          description: Task created successfully
+        "400":
+          description: Validation error
+
+  /api/tasks/{taskId}:
+    get:
+      summary: Get task details
+      description: Requires authentication and role verification.
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Task not found
+
+    put:
+      summary: Update task
+      description: Requires authentication. Updates task details.
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskUpdate"
+      responses:
+        "200":
+          description: Task updated successfully
+        "400":
+          description: Validation error
+        "404":
+          description: Task not found
+
+    delete:
+      summary: Delete task
+      description: Requires authentication.
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - BearerAuth: []
+      responses:
+        "204":
+          description: Task deleted successfully
+        "404":
+          description: Task not found
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    UserRegister:
+      type: object
+      required:
+        - username
+        - email
+        - password
+        - userRole
+      properties:
+        username:
+          type: string
+          example: "example"
+        email:
+          type: string
+          format: email
+          example: "example1@example.com"
+        password:
+          type: string
+          format: password
+          example: "12345678"
+        userRole:
+          type: integer
+          example: 3
+
+    UserLogin:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "example1@example.com"
+        password:
+          type: string
+          format: password
+          example: "12345678"
+
+    User:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        userRole:
+          type: integer
+          description: Role ID
+        tasksConcluded:
+          type: integer
+        userTasksList:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+
+    UserUpdate:
+      type: object
+      properties:
+        username:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+          description: Optional. Only set if updating password.
+
+    TaskCreate:
+      type: object
+      required:
+        - ownerId
+        - title
+        - description
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+
+    Task:
+      type: object
+      properties:
+        taskId:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [pending, new, completed, abandon]
+
+    TaskUpdate:
+      type: object
+      properties:
+        ownerId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        oldOwnerId:
+          type: string
+          format: uuid

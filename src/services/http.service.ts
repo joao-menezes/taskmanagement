@@ -5,6 +5,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 import {setupAssociations} from "../model/associations";
 import {ConnectionRetry} from "../shared/utils/enums/connections.retry";
+import swaggerUi from "swagger-ui-express";
+import YAML from "yamljs";
 
 dotenv.config();
 const _fileName = module.filename.split("/").pop();
@@ -20,8 +22,22 @@ export class HttpService {
         this.app.use(cors())
         this.app.use(express.json());
 
+        this._setupSwagger();
+
         this._registerRoutes();
     }
+
+    private _setupSwagger(): void {
+        try {
+            const swaggerDocument = YAML.load('swagger.yaml');
+            this.app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+            logger.info(`📄 Swagger Docs available at http://localhost:${this.port}/api-docs`);
+        } catch (error) {
+            logger.error(`Failed to load Swagger documentation: ${error} - ${_fileName}`);
+        }
+    }
+
 
     async _initializeDatabase() {
         try {

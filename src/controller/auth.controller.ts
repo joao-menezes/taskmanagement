@@ -39,8 +39,7 @@ export const registerUser = async (req: Request, res: Response) => {
 
         logger.info(`User Created - ${__filename}`);
         res.status(HttpCodes.CREATED).json({
-            message: 'User created successfully',
-            user: user
+            message: 'User created successfully'
         });
     } catch (error) {
         logger.error(`Error in create user ${error} - ${__filename}`)

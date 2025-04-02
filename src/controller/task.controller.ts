@@ -13,7 +13,7 @@ import {TaskService} from "../services/task.service";
 export class TaskController {
     static async getTasks(req: Request, res: Response){
         try {
-            const userId = req.query.userId as string;
+            const {userId} = req.body;
 
             let tasks: TaskInterface[];
             const user = await UserModel.findOne({ where: { userId } });
@@ -62,21 +62,42 @@ export class TaskController {
         }
     }
 
-    static async createTask(req: Request, res: Response) {
-        const { taskId } = req.params
+    static async createTask (req: Request, res: Response) {
         try {
-            const task = await TaskModel.findOne({ where: { taskId } });
+            const { ownerId, title, description }: TaskInterface = req.body
 
-            if (!task) {
-                res.status(HttpCodes.NOT_FOUND).json(SharedErrors.TaskNotFound);
+            const user = await UserModel.findOne({ where: { userId: ownerId } });
+
+            if (!user) {
+                res.status(HttpCodes.BAD_REQUEST).json(SharedErrors.UserNotFound);
                 return;
             }
 
-            logger.info(`Get task with successfully : ${__filename}`);
-            res.status(HttpCodes.OK).json(task);
-        } catch (error) {
-            logger.error(`Error getting task: ${error} - ${__filename}`);
-            res.status(HttpCodes.INTERNAL_SERVER_ERROR).json(SharedErrors.InternalServerError);
+            if (user.role === UserRoles.Viewer) {
+                res.status(HttpCodes.FORBIDDEN).json({
+                    message: "User does not have permission to create or edit tasks"
+                });
+                return;
+            }
+
+            const task = await TaskModel.create({
+                ownerId,
+                title,
+                description
+            });
+
+            user.userTasksList.push(task);
+            await user.save();
+            await UserModel.update({ userTasksList: user.userTasksList }, { where: { userId: ownerId } });
+
+            logger.info(`Task Created - ${__filename}`);
+            res.status(HttpCodes.CREATED).json({
+                message: 'Task created successfully',
+                task: task
+            });
+        } catch (error){
+            logger.error(`Error in create task ${error} - ${__filename}`)
+            res.status(HttpCodes.INTERNAL_SERVER_ERROR).json({ error: SharedErrors.InternalServerError });
             return;
         }
     }
@@ -109,6 +130,13 @@ export class TaskController {
 
             if (task.ownerId !== oldOwnerId && oldOwnerId !== oldOwner?.userId && oldOwnerId !== UserRoles.Admin && oldOwnerId !== UserRoles.Manager) {
                 res.status(HttpCodes.FORBIDDEN).json({ message: "You do not have permission to update this task" });
+                return;
+            }
+
+            const hasChanges = task.ownerId !== ownerId || task.title !== title || task.description !== description || task.status !== status;
+
+            if (!hasChanges) {
+                res.status(HttpCodes.OK).json({ message: 'No changes detected', task });
                 return;
             }
 

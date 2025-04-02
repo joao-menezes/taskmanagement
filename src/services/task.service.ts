@@ -4,6 +4,7 @@ import TaskModel from "../model/task.model";
 
 export class TaskService {
     async changeTaskOwner(task: TaskModel, oldOwner: UserModel | null, newOwner: UserModel) {
+
         if (!oldOwner) {
             return {
                 success: false,
@@ -21,10 +22,13 @@ export class TaskService {
         oldOwner.userTasksList = oldOwner.userTasksList.filter((taskInList: TaskInterface) => taskInList.taskId !== task.taskId);
         await oldOwner.save();
 
+        const isTaskAlreadyAssigned = newOwner.userTasksList.some((taskInList: TaskInterface) => taskInList.taskId === task.taskId);
 
-        const taskJson = task.toJSON();
-        newOwner.userTasksList = [...newOwner.userTasksList, taskJson];
-        await newOwner.save();
+        if (!isTaskAlreadyAssigned) {
+            const taskJson = task.toJSON();
+            newOwner.userTasksList = [...newOwner.userTasksList, taskJson];
+            await newOwner.save();
+        }
 
         return {
             success: true

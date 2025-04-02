@@ -4,7 +4,6 @@ import {SharedErrors} from "../shared/errors/shared-errors";
 import HttpCodes from "http-status-codes";
 import {UserInterface} from "../interface/user.interface";
 import logger from "../shared/utils/logger";
-import {UserRepository} from "../repository/user.repository";
 
 export const getUsers = async (req: Request, res: Response) => {
     try {
